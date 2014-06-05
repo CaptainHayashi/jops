@@ -1,0 +1,7 @@
+*
+!src
+!src/jops
+!src/jops/*.java
+!README.md
+!LICENSE.txt
+!.gitignore
