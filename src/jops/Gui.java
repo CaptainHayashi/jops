@@ -142,7 +142,7 @@ public class Gui implements Listener {
 	});
     }
 
-    private void setLookAndFeel() {
+    private static void setLookAndFeel() {
 	try {
 	    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 	} catch (Exception e) {
