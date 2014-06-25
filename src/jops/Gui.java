@@ -11,6 +11,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
+import javax.swing.UIManager;
+import javax.swing.UIManager.*;
+
 
 public class Gui implements Listener {
     private Model model;
@@ -47,6 +50,8 @@ public class Gui implements Listener {
     }
 
     private void createAndShowGui() {
+	setLookAndFeel();
+	
 	this.frame = new JFrame();
 
 	JPanel controlPanel = new JPanel();
@@ -109,6 +114,14 @@ public class Gui implements Listener {
 	
 	this.frame.pack();
 	this.frame.setVisible(true);
+    }
+
+    private void setLookAndFeel() {
+	try {
+	    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+	} catch (Exception e) {
+	    // Use default look and feel
+	}
     }
 
     private void loadFile() {
