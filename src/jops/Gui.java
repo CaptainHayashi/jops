@@ -22,19 +22,13 @@ public class Gui implements Listener {
     private JLabel duration = new JLabel("--");
     private JLabel position = new JLabel("--");
     private JFrame frame;
-    
     private JSlider seeker = new JSlider();
-
     private JLabel songAlbum = new JLabel("--");
     private JLabel songArtist = new JLabel("--");
     private JLabel songTitle = new JLabel("--");
-
     private JButton playButton = new JButton("Play");
-
     private JButton stopButton = new JButton("Stop");
-
     private JButton ejctButton = new JButton("Eject");
-
     private JButton loadButton = new JButton("Load");
 
     public Gui(Model inModel) {
