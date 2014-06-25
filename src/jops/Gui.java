@@ -1,11 +1,19 @@
 package jops;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.FontFormatException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.Duration;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -15,6 +23,14 @@ import javax.swing.UIManager;
 
 
 public class Gui implements Listener {
+    private static final String FA_LOAD = "\uf15b";
+
+    private static final String FA_EJECT = "\uf052";
+
+    private static final String FA_STOP = "\uf04d";
+
+    private static final String FA_PLAY = "\uf04b";
+
     private Model model;
 
     private JLabel state = new JLabel("EJECTED");
@@ -30,6 +46,8 @@ public class Gui implements Listener {
     private JButton stopButton = new JButton("Stop");
     private JButton ejctButton = new JButton("Eject");
     private JButton loadButton = new JButton("Load");
+    
+    private Font fontAwesome = null;
 
     public Gui(Model inModel) {
 	this.model = inModel;
@@ -44,6 +62,11 @@ public class Gui implements Listener {
 
     private void createAndShowGui() {
 	setLookAndFeel();
+	try {
+	    InputStream is = this.getClass().getResourceAsStream("FontAwesome.ttf");
+	    this.fontAwesome = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(Font.PLAIN, 24);
+	} catch (FontFormatException | IOException e) {
+	}
 	
 	this.frame = new JFrame();
 
@@ -100,10 +123,14 @@ public class Gui implements Listener {
 
     private JPanel initMetadataPanel() {
 	JPanel metadataPanel = new JPanel();
+	
 	metadataPanel.setLayout(new BoxLayout(metadataPanel, BoxLayout.PAGE_AXIS));
+	metadataPanel.setBorder(BorderFactory.createLoweredBevelBorder());
+	
 	metadataPanel.add(this.songTitle);
 	metadataPanel.add(this.songArtist);
 	metadataPanel.add(this.songAlbum);
+	
 	return metadataPanel;
     }
 
@@ -120,6 +147,24 @@ public class Gui implements Listener {
 	this.loadButton.addActionListener((e) -> {
 	    loadFile();
 	});
+	
+	setFontAwesomeIcon(this.playButton, FA_PLAY);
+	setFontAwesomeIcon(this.stopButton, FA_STOP);
+	setFontAwesomeIcon(this.ejctButton, FA_EJECT);
+	setFontAwesomeIcon(this.loadButton, FA_LOAD);
+    }
+    
+    private void setFontAwesomeIcon(JButton component, String icon) {
+	if (this.fontAwesome != null) {
+	    component.setFont(this.fontAwesome);
+	    component.setText(icon);
+	}
+    }
+    private void setFontAwesomeIcon(JLabel component, String icon) {
+	if (this.fontAwesome != null) {
+	    component.setFont(this.fontAwesome);
+	    component.setText(icon);
+	}
     }
 
     private void initSeeker() {
@@ -184,6 +229,9 @@ public class Gui implements Listener {
 	this.stopButton.setEnabled(false);
 	this.playButton.setEnabled(false);
 	this.ejctButton.setEnabled(false);
+	
+	setFontAwesomeIcon(this.state, FA_EJECT);
+	this.state.setForeground(Color.BLUE);
     }
 
     private void handlePlay() {
@@ -191,6 +239,9 @@ public class Gui implements Listener {
 	this.stopButton.setEnabled(true);
 	this.playButton.setEnabled(false);
 	this.ejctButton.setEnabled(true);
+	
+	setFontAwesomeIcon(this.state, FA_PLAY);
+	this.state.setForeground(Color.GREEN);
     }
 
     private void handleStop() {
@@ -198,6 +249,9 @@ public class Gui implements Listener {
 	this.stopButton.setEnabled(false);
 	this.playButton.setEnabled(true);
 	this.ejctButton.setEnabled(true);
+	
+	setFontAwesomeIcon(this.state, FA_STOP);
+	this.state.setForeground(Color.RED);
     }
 
     @Override
@@ -229,16 +283,16 @@ public class Gui implements Listener {
     @Override
     public void loadFailed() {
 	clearMetadata();
-	setSongAlbum("Load failed");
+	setSongTitle("(Load Failed)");
     }
     
     private void clearMetadata() {
-	setSongAlbum("--");
-	setSongArtist("--");
-	setSongTitle("--");
+	setSongAlbum("No Album");
+	setSongArtist("No Artist");
+	setSongTitle("No Title");
 	
-	this.duration.setText("--");
-	this.position.setText("--");
+	this.duration.setText("0:00:00");
+	this.position.setText("0:00:00");
 	
 	this.seeker.setValue(0);
 	this.seeker.setMaximum(0);
