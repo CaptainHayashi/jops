@@ -5,7 +5,6 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.FontFormatException;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Duration;
@@ -13,14 +12,13 @@ import java.time.Duration;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.UIManager;
-
+import javax.swing.border.EmptyBorder;
 
 public class Gui implements Listener {
     private static final String FA_LOAD = "\uf15b";
@@ -46,7 +44,7 @@ public class Gui implements Listener {
     private JButton stopButton = new JButton("Stop");
     private JButton ejctButton = new JButton("Eject");
     private JButton loadButton = new JButton("Load");
-    
+
     private Font fontAwesome = null;
 
     public Gui(Model inModel) {
@@ -62,17 +60,22 @@ public class Gui implements Listener {
 
     private void createAndShowGui() {
 	setLookAndFeel();
-	try {
-	    InputStream is = this.getClass().getResourceAsStream("FontAwesome.ttf");
-	    this.fontAwesome = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(Font.PLAIN, 24);
+	try (InputStream is = this.getClass().getResourceAsStream(
+		    "FontAwesome.ttf")) {
+	    this.fontAwesome = Font.createFont(Font.TRUETYPE_FONT, is)
+		    .deriveFont(Font.PLAIN, 24);
 	} catch (FontFormatException | IOException e) {
+	    // Ignore - things should fall back to text labels if fontAwesome
+	    // is null.
 	}
-	
+
 	this.frame = new JFrame();
 
 	JPanel controlPanel = initControlPanel();
 	JPanel positionPanel = initPositionPanel();
 	JPanel metadataPanel = initMetadataPanel();
+
+	this.state.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
 	this.frame.getContentPane().add(controlPanel, BorderLayout.PAGE_END);
 	this.frame.getContentPane().add(this.name, BorderLayout.PAGE_START);
@@ -82,21 +85,22 @@ public class Gui implements Listener {
 
 	// Set up player for the initial ejected state.
 	handleEject();
-	
+
 	this.frame.pack();
 	this.frame.setVisible(true);
     }
 
     private JPanel initControlPanel() {
 	JPanel controlPanel = new JPanel();
-	controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
-	
+	controlPanel
+		.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
+
 	controlPanel.add(this.seeker);
 	initSeeker();
-	
+
 	JPanel buttonPanel = initButtonPanel();
 	controlPanel.add(buttonPanel);
-	
+
 	return controlPanel;
     }
 
@@ -109,13 +113,17 @@ public class Gui implements Listener {
 	buttonPanel.add(this.loadButton);
 
 	initButtons();
-	
+
 	return buttonPanel;
     }
 
     private JPanel initPositionPanel() {
 	JPanel positionPanel = new JPanel();
-	positionPanel.setLayout(new BoxLayout(positionPanel, BoxLayout.PAGE_AXIS));
+
+	positionPanel.setLayout(new BoxLayout(positionPanel,
+		BoxLayout.PAGE_AXIS));
+	positionPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+
 	positionPanel.add(this.duration);
 	positionPanel.add(this.position);
 	return positionPanel;
@@ -123,14 +131,17 @@ public class Gui implements Listener {
 
     private JPanel initMetadataPanel() {
 	JPanel metadataPanel = new JPanel();
-	
-	metadataPanel.setLayout(new BoxLayout(metadataPanel, BoxLayout.PAGE_AXIS));
-	metadataPanel.setBorder(BorderFactory.createLoweredBevelBorder());
-	
+
+	metadataPanel.setLayout(new BoxLayout(metadataPanel,
+		BoxLayout.PAGE_AXIS));
+	metadataPanel.setBorder(BorderFactory.createCompoundBorder(
+		BorderFactory.createLoweredBevelBorder(),
+		BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+
 	metadataPanel.add(this.songTitle);
 	metadataPanel.add(this.songArtist);
 	metadataPanel.add(this.songAlbum);
-	
+
 	return metadataPanel;
     }
 
@@ -147,19 +158,20 @@ public class Gui implements Listener {
 	this.loadButton.addActionListener((e) -> {
 	    loadFile();
 	});
-	
+
 	setFontAwesomeIcon(this.playButton, FA_PLAY);
 	setFontAwesomeIcon(this.stopButton, FA_STOP);
 	setFontAwesomeIcon(this.ejctButton, FA_EJECT);
 	setFontAwesomeIcon(this.loadButton, FA_LOAD);
     }
-    
+
     private void setFontAwesomeIcon(JButton component, String icon) {
 	if (this.fontAwesome != null) {
 	    component.setFont(this.fontAwesome);
 	    component.setText(icon);
 	}
     }
+
     private void setFontAwesomeIcon(JLabel component, String icon) {
 	if (this.fontAwesome != null) {
 	    component.setFont(this.fontAwesome);
@@ -173,7 +185,7 @@ public class Gui implements Listener {
 	    if (!this.seeker.getValueIsAdjusting()) {
 		// This change may have happened as part of a position update
 		// from the player, in which case the new duration will be the
-		// same as that in the model.  Ignore this case.
+		// same as that in the model. Ignore this case.
 		if (this.seeker.getValue() != this.model.time()) {
 		    this.model.seek(this.seeker.getValue());
 		}
@@ -207,7 +219,7 @@ public class Gui implements Listener {
     @Override
     public void setState(State to) {
 	this.state.setText(to.toString());
-	
+
 	switch (to) {
 	case EJECTED:
 	    handleEject();
@@ -229,7 +241,7 @@ public class Gui implements Listener {
 	this.stopButton.setEnabled(false);
 	this.playButton.setEnabled(false);
 	this.ejctButton.setEnabled(false);
-	
+
 	setFontAwesomeIcon(this.state, FA_EJECT);
 	this.state.setForeground(Color.BLUE);
     }
@@ -239,7 +251,7 @@ public class Gui implements Listener {
 	this.stopButton.setEnabled(true);
 	this.playButton.setEnabled(false);
 	this.ejctButton.setEnabled(true);
-	
+
 	setFontAwesomeIcon(this.state, FA_PLAY);
 	this.state.setForeground(Color.GREEN);
     }
@@ -249,7 +261,7 @@ public class Gui implements Listener {
 	this.stopButton.setEnabled(false);
 	this.playButton.setEnabled(true);
 	this.ejctButton.setEnabled(true);
-	
+
 	setFontAwesomeIcon(this.state, FA_STOP);
 	this.state.setForeground(Color.RED);
     }
@@ -257,21 +269,21 @@ public class Gui implements Listener {
     @Override
     public void setTime(long micros) {
 	this.position.setText(formatTime(micros));
-	
+
 	// Only update the seek bar if it isn't being used.
 	if (!this.seeker.getValueIsAdjusting()) {
 	    this.seeker.setValue((int) micros);
 	}
     }
-    
+
     private static String formatTime(long micros) {
 	Duration dur = Duration.ofNanos(micros * 1000);
 
 	long hours = dur.toHours();
 	long mins = dur.minusHours(hours).toMinutes();
 	long secs = dur.minusHours(hours).minusMinutes(mins).getSeconds();
-	return String.format("%d:%02d:%02d",
-		Long.valueOf(hours), Long.valueOf(mins), Long.valueOf(secs));
+	return String.format("%d:%02d:%02d", Long.valueOf(hours),
+		Long.valueOf(mins), Long.valueOf(secs));
     }
 
     @Override
@@ -285,15 +297,15 @@ public class Gui implements Listener {
 	clearMetadata();
 	setSongTitle("(Load Failed)");
     }
-    
+
     private void clearMetadata() {
 	setSongAlbum("No Album");
 	setSongArtist("No Artist");
 	setSongTitle("No Title");
-	
+
 	this.duration.setText("0:00:00");
 	this.position.setText("0:00:00");
-	
+
 	this.seeker.setValue(0);
 	this.seeker.setMaximum(0);
     }
@@ -302,12 +314,12 @@ public class Gui implements Listener {
     public void setSongAlbum(String album) {
 	this.songAlbum.setText(album);
     }
-    
+
     @Override
     public void setSongArtist(String artist) {
 	this.songArtist.setText(artist);
     }
-    
+
     @Override
     public void setSongTitle(String title) {
 	this.songTitle.setText(title);
