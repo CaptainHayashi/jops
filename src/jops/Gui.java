@@ -10,6 +10,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
 
 public class Gui implements Listener {
     private Model model;
@@ -19,10 +20,20 @@ public class Gui implements Listener {
     private JLabel duration = new JLabel("--");
     private JLabel position = new JLabel("--");
     private JFrame frame;
+    
+    private JSlider seeker = new JSlider();
 
     private JLabel songAlbum = new JLabel("--");
     private JLabel songArtist = new JLabel("--");
     private JLabel songTitle = new JLabel("--");
+
+    private JButton playButton = new JButton("Play");
+
+    private JButton stopButton = new JButton("Stop");
+
+    private JButton ejctButton = new JButton("Eject");
+
+    private JButton loadButton = new JButton("Load");
 
     public Gui(Model inModel) {
 	this.model = inModel;
@@ -38,29 +49,41 @@ public class Gui implements Listener {
     private void createAndShowGui() {
 	this.frame = new JFrame();
 
+	JPanel controlPanel = new JPanel();
+	controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
+	
+	controlPanel.add(this.seeker);
+	this.seeker.setEnabled(false);
+	this.seeker.addChangeListener((e) -> {
+	    if (!this.seeker.getValueIsAdjusting()) {
+		// This change may have happened as part of a position update
+		// from the player, in which case the new duration will be the
+		// same as that in the model.  Ignore this case.
+		if (this.seeker.getValue() != this.model.time()) {
+		    this.model.seek(this.seeker.getValue());
+		}
+	    }
+	});
+	
 	JPanel buttonPanel = new JPanel(new FlowLayout());
-	JButton playButton = new JButton("Play");
-	JButton stopButton = new JButton("Stop");
-	JButton ejctButton = new JButton("Eject");
-	JButton loadButton = new JButton("Load");
-
-	buttonPanel.add(playButton);
-	playButton.addActionListener((e) -> {
+	controlPanel.add(buttonPanel);
+	buttonPanel.add(this.playButton);
+	this.playButton.addActionListener((e) -> {
 	    this.model.play();
 	});
 
-	buttonPanel.add(stopButton);
-	stopButton.addActionListener((e) -> {
+	buttonPanel.add(this.stopButton);
+	this.stopButton.addActionListener((e) -> {
 	    this.model.stop();
 	});
 
-	buttonPanel.add(ejctButton);
-	ejctButton.addActionListener((e) -> {
+	buttonPanel.add(this.ejctButton);
+	this.ejctButton.addActionListener((e) -> {
 	    this.model.eject();
 	});
 
-	buttonPanel.add(loadButton);
-	loadButton.addActionListener((e) -> {
+	buttonPanel.add(this.loadButton);
+	this.loadButton.addActionListener((e) -> {
 	    loadFile();
 	});
 	
@@ -75,16 +98,17 @@ public class Gui implements Listener {
 	metadataPanel.add(this.songArtist);
 	metadataPanel.add(this.songAlbum);
 
-	this.frame.getContentPane().add(buttonPanel, BorderLayout.PAGE_END);
+	this.frame.getContentPane().add(controlPanel, BorderLayout.PAGE_END);
 	this.frame.getContentPane().add(this.name, BorderLayout.PAGE_START);
 	this.frame.getContentPane().add(this.state, BorderLayout.LINE_START);
 	this.frame.getContentPane().add(metadataPanel, BorderLayout.CENTER);
 	this.frame.getContentPane().add(positionPanel, BorderLayout.LINE_END);
 
+	// Set up player for the initial ejected state.
+	handleEject();
+	
 	this.frame.pack();
 	this.frame.setVisible(true);
-
-	System.out.println("GUI shown");
     }
 
     private void loadFile() {
@@ -106,14 +130,51 @@ public class Gui implements Listener {
     public void setState(State to) {
 	this.state.setText(to.toString());
 	
-	if (to == State.EJECTED) {
-	    clearMetadata();
+	switch (to) {
+	case EJECTED:
+	    handleEject();
+	    break;
+	case PLAYING:
+	    handlePlay();
+	    break;
+	case STOPPED:
+	    handleStop();
+	    break;
+	default:
+	    break;
 	}
+    }
+
+    private void handleEject() {
+	clearMetadata();
+	this.seeker.setEnabled(false);
+	this.stopButton.setEnabled(false);
+	this.playButton.setEnabled(false);
+	this.ejctButton.setEnabled(false);
+    }
+
+    private void handlePlay() {
+	this.seeker.setEnabled(true);
+	this.stopButton.setEnabled(true);
+	this.playButton.setEnabled(false);
+	this.ejctButton.setEnabled(true);
+    }
+
+    private void handleStop() {
+	this.seeker.setEnabled(true);
+	this.stopButton.setEnabled(false);
+	this.playButton.setEnabled(true);
+	this.ejctButton.setEnabled(true);
     }
 
     @Override
     public void setTime(long micros) {
 	this.position.setText(formatTime(micros));
+	
+	// Only update the seek bar if it isn't being used.
+	if (!this.seeker.getValueIsAdjusting()) {
+	    this.seeker.setValue((int) micros);
+	}
     }
     
     private static String formatTime(long micros) {
@@ -129,6 +190,7 @@ public class Gui implements Listener {
     @Override
     public void setTotalDuration(long micros) {
 	this.duration.setText(formatTime(micros));
+	this.seeker.setMaximum((int) micros);
     }
 
     @Override
@@ -144,6 +206,9 @@ public class Gui implements Listener {
 	
 	this.duration.setText("--");
 	this.position.setText("--");
+	
+	this.seeker.setValue(0);
+	this.seeker.setMaximum(0);
     }
 
     @Override

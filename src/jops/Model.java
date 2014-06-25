@@ -9,11 +9,17 @@ public class Model implements Listener {
     private BlockingQueue<Response> inQueue;
     private BlockingQueue<Request> outQueue;
     private Set<Listener> listeners = new HashSet<>();
+    
+    private long time;
 
     public Model(BlockingQueue<Response> inInQueue,
 	    BlockingQueue<Request> inOutQueue) {
 	this.inQueue = inInQueue;
 	this.outQueue = inOutQueue;
+    }
+    
+    public long time() {
+	return this.time;
     }
 
     public void registerListener(Listener l) {
@@ -36,6 +42,8 @@ public class Model implements Listener {
 
     @Override
     public void setTime(long micros) {
+	this.time = micros;
+	
 	this.listeners.forEach((listener) -> {
 	    listener.setTime(micros);
 	});
@@ -104,6 +112,14 @@ public class Model implements Listener {
 	try {
 	    System.out.println("Requesting state change to " + state);
 	    this.outQueue.put(new StateChangeRequest(state));
+	} catch (InterruptedException e) {
+	    // Ignore
+	}
+    }
+    
+    public void seek(long position) {
+	try {
+	    this.outQueue.put(new SeekRequest(position));
 	} catch (InterruptedException e) {
 	    // Ignore
 	}
