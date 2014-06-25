@@ -54,54 +54,9 @@ public class Gui implements Listener {
 	
 	this.frame = new JFrame();
 
-	JPanel controlPanel = new JPanel();
-	controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
-	
-	controlPanel.add(this.seeker);
-	this.seeker.setEnabled(false);
-	this.seeker.addChangeListener((e) -> {
-	    if (!this.seeker.getValueIsAdjusting()) {
-		// This change may have happened as part of a position update
-		// from the player, in which case the new duration will be the
-		// same as that in the model.  Ignore this case.
-		if (this.seeker.getValue() != this.model.time()) {
-		    this.model.seek(this.seeker.getValue());
-		}
-	    }
-	});
-	
-	JPanel buttonPanel = new JPanel(new FlowLayout());
-	controlPanel.add(buttonPanel);
-	buttonPanel.add(this.playButton);
-	this.playButton.addActionListener((e) -> {
-	    this.model.play();
-	});
-
-	buttonPanel.add(this.stopButton);
-	this.stopButton.addActionListener((e) -> {
-	    this.model.stop();
-	});
-
-	buttonPanel.add(this.ejctButton);
-	this.ejctButton.addActionListener((e) -> {
-	    this.model.eject();
-	});
-
-	buttonPanel.add(this.loadButton);
-	this.loadButton.addActionListener((e) -> {
-	    loadFile();
-	});
-	
-	JPanel positionPanel = new JPanel();
-	positionPanel.setLayout(new BoxLayout(positionPanel, BoxLayout.PAGE_AXIS));
-	positionPanel.add(this.duration);
-	positionPanel.add(this.position);
-	
-	JPanel metadataPanel = new JPanel();
-	metadataPanel.setLayout(new BoxLayout(metadataPanel, BoxLayout.PAGE_AXIS));
-	metadataPanel.add(this.songTitle);
-	metadataPanel.add(this.songArtist);
-	metadataPanel.add(this.songAlbum);
+	JPanel controlPanel = initControlPanel();
+	JPanel positionPanel = initPositionPanel();
+	JPanel metadataPanel = initMetadataPanel();
 
 	this.frame.getContentPane().add(controlPanel, BorderLayout.PAGE_END);
 	this.frame.getContentPane().add(this.name, BorderLayout.PAGE_START);
@@ -114,6 +69,78 @@ public class Gui implements Listener {
 	
 	this.frame.pack();
 	this.frame.setVisible(true);
+    }
+
+    private JPanel initControlPanel() {
+	JPanel controlPanel = new JPanel();
+	controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.PAGE_AXIS));
+	
+	controlPanel.add(this.seeker);
+	initSeeker();
+	
+	JPanel buttonPanel = initButtonPanel();
+	controlPanel.add(buttonPanel);
+	
+	return controlPanel;
+    }
+
+    private JPanel initButtonPanel() {
+	JPanel buttonPanel = new JPanel(new FlowLayout());
+
+	buttonPanel.add(this.playButton);
+	buttonPanel.add(this.stopButton);
+	buttonPanel.add(this.ejctButton);
+	buttonPanel.add(this.loadButton);
+
+	initButtons();
+	
+	return buttonPanel;
+    }
+
+    private JPanel initPositionPanel() {
+	JPanel positionPanel = new JPanel();
+	positionPanel.setLayout(new BoxLayout(positionPanel, BoxLayout.PAGE_AXIS));
+	positionPanel.add(this.duration);
+	positionPanel.add(this.position);
+	return positionPanel;
+    }
+
+    private JPanel initMetadataPanel() {
+	JPanel metadataPanel = new JPanel();
+	metadataPanel.setLayout(new BoxLayout(metadataPanel, BoxLayout.PAGE_AXIS));
+	metadataPanel.add(this.songTitle);
+	metadataPanel.add(this.songArtist);
+	metadataPanel.add(this.songAlbum);
+	return metadataPanel;
+    }
+
+    private void initButtons() {
+	this.playButton.addActionListener((e) -> {
+	    this.model.play();
+	});
+	this.stopButton.addActionListener((e) -> {
+	    this.model.stop();
+	});
+	this.ejctButton.addActionListener((e) -> {
+	    this.model.eject();
+	});
+	this.loadButton.addActionListener((e) -> {
+	    loadFile();
+	});
+    }
+
+    private void initSeeker() {
+	this.seeker.setEnabled(false);
+	this.seeker.addChangeListener((e) -> {
+	    if (!this.seeker.getValueIsAdjusting()) {
+		// This change may have happened as part of a position update
+		// from the player, in which case the new duration will be the
+		// same as that in the model.  Ignore this case.
+		if (this.seeker.getValue() != this.model.time()) {
+		    this.model.seek(this.seeker.getValue());
+		}
+	    }
+	});
     }
 
     private void setLookAndFeel() {
